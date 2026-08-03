@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.3
+
+- Clarify which preferences are natively scored locally and which require live-page evidence or an AI/manual check.
+
 ## 0.1.2
 
 - Make the daily discovery workflow read local search preferences, prioritize company and official ATS pages, and avoid rechecking unchanged URLs or resurfacing already handled roles.

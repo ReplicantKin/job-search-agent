@@ -19,6 +19,8 @@ Read the local profile before searching. Use these fields when present:
 
 If there are no target roles or locations, ask for those two inputs before launching a broad search. Treat missing optional preferences as unknown, not as permission to invent them.
 
+The local `daily` score natively uses roles, locations, exclusions, must-have/preferred keywords, and work modes. Salary floors, seniority, language, and start-date constraints are additional live-page/AI checks: show their evidence or mark them unknown rather than pretending the local score verified them.
+
 ## Source pass
 
 For each daily run, make one focused search pass in this order:

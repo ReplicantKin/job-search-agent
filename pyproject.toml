@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "job-search-agent"
-version = "0.1.2"
+version = "0.1.3"
 description = "Local-first local job search state and application preparation core"
 requires-python = ">=3.9"
 
