@@ -23,6 +23,7 @@ from .models import (
     ReviewDecision,
     new_id,
     now_iso,
+    sanitize_evidence,
 )
 
 
@@ -37,6 +38,24 @@ def _redact_local_paths(value: Any) -> Any:
         return redacted
     if isinstance(value, list):
         return [_redact_local_paths(item) for item in value]
+    return value
+
+
+def _sanitize_event_payload(value: Any) -> Any:
+    """Keep execution events useful without retaining secrets from browser output."""
+    if isinstance(value, dict):
+        sanitized: dict[str, Any] = {}
+        for key, item in value.items():
+            normalized_key = str(key).casefold().replace("-", "_")
+            if any(marker in normalized_key for marker in ("password", "secret", "token", "cookie")):
+                sanitized[key] = "[secret omitted]"
+            elif normalized_key == "evidence":
+                sanitized[key] = sanitize_evidence(item)
+            else:
+                sanitized[key] = _sanitize_event_payload(item)
+        return sanitized
+    if isinstance(value, list):
+        return [_sanitize_event_payload(item) for item in value]
     return value
 
 
@@ -459,7 +478,7 @@ class JobStore:
         if status not in {"paused", "failed", "manual_required"}:
             raise ValueError(f"execution event cannot use status: {status}")
         self.get_job(job_id)
-        self._event(job_id, f"execution_{status}", payload)
+        self._event(job_id, f"execution_{status}", _sanitize_event_payload(payload))
         self.connection.commit()
 
     def set_profile(self, key: str, value: Any) -> None:
@@ -658,7 +677,9 @@ class JobStore:
         events = []
         for row in self.connection.execute("SELECT * FROM events ORDER BY id").fetchall():
             data = dict(row)
-            data["payload"] = _redact_local_paths(json.loads(data.pop("payload_json")))
+            data["payload"] = _redact_local_paths(
+                _sanitize_event_payload(json.loads(data.pop("payload_json")))
+            )
             events.append(data)
         materials = []
         for row in self.connection.execute("SELECT * FROM materials ORDER BY kind, version").fetchall():

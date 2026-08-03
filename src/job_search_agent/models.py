@@ -43,15 +43,29 @@ VERIFIABLE_EVIDENCE_FIELDS = {
     "confirmation_text",
     "screenshot_path",
     "message_url",
+    "message_id",
+    "channel",
     "user_confirmed",
 }
 
 
-def has_verifiable_evidence(evidence: dict[str, Any]) -> bool:
+def sanitize_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
+    """Keep only small, non-secret evidence fields that the audit model supports."""
     if not isinstance(evidence, dict):
-        return False
+        return {}
+    sanitized: dict[str, Any] = {}
     for field in VERIFIABLE_EVIDENCE_FIELDS:
         value = evidence.get(field)
+        if field == "user_confirmed":
+            if isinstance(value, bool):
+                sanitized[field] = value
+        elif isinstance(value, (str, int, float)) and not isinstance(value, bool):
+            sanitized[field] = value
+    return sanitized
+
+
+def has_verifiable_evidence(evidence: dict[str, Any]) -> bool:
+    for field, value in sanitize_evidence(evidence).items():
         if field == "user_confirmed" and value is True:
             return True
         if field != "user_confirmed" and value not in (None, "", False):
@@ -104,6 +118,7 @@ class ApplicationResult:
     submitted_at: str | None = None
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "evidence", sanitize_evidence(self.evidence))
         if self.status in {"submitted_waiting", "hr_contact", "offer"} and not has_verifiable_evidence(self.evidence):
             raise ValueError(f"{self.status} application requires evidence")
         if self.status == "rejected" and not self.evidence and not self.reason:

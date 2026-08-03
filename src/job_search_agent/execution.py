@@ -5,7 +5,7 @@ import time
 from dataclasses import dataclass
 from typing import Any, Literal
 
-from .models import has_verifiable_evidence
+from .models import has_verifiable_evidence, sanitize_evidence
 
 
 EXECUTION_STATUSES = {"submitted", "paused", "failed", "manual_required"}
@@ -18,6 +18,7 @@ class ApplicationExecutorResult:
     reason: str | None = None
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "evidence", sanitize_evidence(self.evidence))
         if self.status not in EXECUTION_STATUSES:
             raise ValueError(f"invalid execution status: {self.status}")
         if self.status == "submitted" and not has_verifiable_evidence(self.evidence):

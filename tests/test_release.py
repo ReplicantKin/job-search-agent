@@ -32,7 +32,7 @@ class ReleaseTests(unittest.TestCase):
         submission_text = submission_path.read_text(encoding="utf-8")
         self.assertIn("5 个正向测试用例", submission_text)
         self.assertIn("3 个反向测试用例", submission_text)
-        self.assertIn("job-search-agent-0.1.0.zip", submission_text)
+        self.assertIn("job-search-agent-0.1.1.zip", submission_text)
         publishing_text = (ROOT / "docs" / "publishing.md").read_text(encoding="utf-8")
         self.assertIn("codex plugin marketplace add ReplicantKin/job-search-agent", publishing_text)
         self.assertIn("job-search-agent@job-search-agent-public", publishing_text)
@@ -94,7 +94,7 @@ class ReleaseTests(unittest.TestCase):
                 capture_output=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            archive = Path(directory) / "job-search-agent-0.1.0.zip"
+            archive = Path(directory) / "job-search-agent-0.1.1.zip"
             self.assertTrue(archive.exists())
             with zipfile.ZipFile(archive) as package:
                 names = set(package.namelist())
@@ -117,7 +117,7 @@ class ReleaseTests(unittest.TestCase):
                 capture_output=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            archive = output_dir / "job-search-agent-0.1.0.zip"
+            archive = output_dir / "job-search-agent-0.1.1.zip"
             install_dir = Path(directory) / "installed"
             install_dir.mkdir()
             with zipfile.ZipFile(archive) as package:

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1
+
+- Sanitize application evidence and execution events with an explicit allowlist so accidental passwords, tokens, and nested secret fields do not persist or enter exports.
+- Add the public submission packet with listing metadata, release notes, and reproducible positive and negative test cases.
+
 ## 0.1.0
 
 Initial local-first release candidate.

@@ -284,6 +284,52 @@ class JobStoreTests(unittest.TestCase):
         self.assertNotIn(local_screenshot, serialized)
         self.assertIn("[local path omitted]", serialized)
 
+    def test_application_evidence_keeps_only_allowlisted_fields(self):
+        job = self.store.upsert_job(
+            JobInput(
+                source="company", source_job_id="evidence-allowlist", url="https://example.com/evidence-allowlist",
+                company="示例公司", title="解决方案顾问", location="深圳", description="客户方案。",
+            )
+        )
+        application = self.store.record_application(
+            job.id,
+            ApplicationResult(
+                status="submitted_waiting",
+                evidence={
+                    "confirmation_url": "https://example.com/confirmation/allowlisted",
+                    "password": "must-not-persist",
+                    "access_token": "must-not-persist",
+                    "nested": {"secret": "must-not-persist"},
+                },
+            ),
+        )
+
+        self.assertEqual(
+            application.evidence,
+            {"confirmation_url": "https://example.com/confirmation/allowlisted"},
+        )
+        exported = self.store.export_json()
+        serialized = json.dumps(exported, ensure_ascii=False)
+        self.assertIn("https://example.com/confirmation/allowlisted", serialized)
+        self.assertNotIn("must-not-persist", serialized)
+
+    def test_execution_event_scrubs_secret_like_fields(self):
+        job = self.store.upsert_job(
+            JobInput(
+                source="company", source_job_id="event-secrets", url="https://example.com/event-secrets",
+                company="示例公司", title="解决方案顾问", location="深圳", description="客户方案。",
+            )
+        )
+        self.store.record_execution_event(
+            job.id,
+            "paused",
+            {"reason": "需要人工处理", "evidence": {"password": "must-not-export", "receipt": "visible"}},
+        )
+
+        serialized = json.dumps(self.store.export_json(), ensure_ascii=False)
+        self.assertNotIn("must-not-export", serialized)
+        self.assertIn("visible", serialized)
+
     def test_authorization_is_persisted_and_consumed_once(self):
         job = self.store.upsert_job(
             JobInput(
