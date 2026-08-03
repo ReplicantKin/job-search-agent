@@ -6,10 +6,12 @@ import secrets
 import sqlite3
 import time
 from dataclasses import asdict
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
+from urllib.parse import urlsplit
 
-from .dedupe import canonical_job_key, identity_key, job_fingerprint
+from .dedupe import canonical_job_key, canonical_url, identity_key, job_fingerprint, normalize_source
 from .execution import ApplicationAuthorization
 from .models import (
     APPLICATION_STATUSES,
@@ -21,6 +23,8 @@ from .models import (
     JobRecord,
     MaterialRecord,
     ReviewDecision,
+    SOURCE_CHECK_STATUSES,
+    SourceCheckRecord,
     new_id,
     now_iso,
     sanitize_evidence,
@@ -103,6 +107,18 @@ class JobStore:
             CREATE INDEX IF NOT EXISTS idx_jobs_queue ON jobs(screening_status, application_status);
             CREATE INDEX IF NOT EXISTS idx_jobs_identity ON jobs(identity_key, fingerprint);
 
+            CREATE TABLE IF NOT EXISTS source_checks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source TEXT NOT NULL,
+                url TEXT NOT NULL,
+                checked_at TEXT NOT NULL,
+                result_count INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                warnings_json TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_source_checks_latest
+                ON source_checks(source, url, checked_at DESC, id DESC);
+
             CREATE TABLE IF NOT EXISTS job_sources (
                 job_id TEXT NOT NULL,
                 source TEXT NOT NULL,
@@ -178,6 +194,145 @@ class JobStore:
             """
         )
         self.connection.commit()
+
+    @staticmethod
+    def _normalize_source_check_url(url: str) -> str:
+        raw_url = url.strip()
+        parts = urlsplit(raw_url)
+        if (
+            parts.scheme.casefold() != "https"
+            or not parts.netloc
+            or parts.username is not None
+            or parts.password is not None
+            or parts.fragment
+        ):
+            raise ValueError("source check URL must be HTTPS without credentials or fragments")
+        return canonical_url(raw_url)
+
+    @staticmethod
+    def _normalize_source_check_time(checked_at: str) -> str:
+        try:
+            parsed = datetime.fromisoformat(checked_at.strip())
+        except (AttributeError, ValueError) as error:
+            raise ValueError("source check time must be an ISO-8601 timestamp") from error
+        if parsed.tzinfo is None:
+            raise ValueError("source check time must include a timezone")
+        return parsed.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+
+    @staticmethod
+    def _source_check_from_row(row: sqlite3.Row) -> SourceCheckRecord:
+        warnings = json.loads(row["warnings_json"])
+        if not isinstance(warnings, list) or not all(isinstance(item, str) for item in warnings):
+            raise ValueError("stored source check warnings must be a string array")
+        return SourceCheckRecord(
+            id=row["id"],
+            source=row["source"],
+            url=row["url"],
+            checked_at=row["checked_at"],
+            result_count=row["result_count"],
+            status=row["status"],
+            warnings=tuple(warnings),
+        )
+
+    def record_source_check(
+        self,
+        source: str,
+        url: str,
+        checked_at: str,
+        result_count: int,
+        status: str,
+        warnings: Sequence[str] = (),
+    ) -> SourceCheckRecord:
+        if not source.strip():
+            raise ValueError("source check source cannot be empty")
+        normalized_source = normalize_source(source)
+        normalized_url = self._normalize_source_check_url(url)
+        normalized_time = self._normalize_source_check_time(checked_at)
+        if isinstance(result_count, bool) or not isinstance(result_count, int) or result_count < 0:
+            raise ValueError("source check result count must be a non-negative integer")
+        if status not in SOURCE_CHECK_STATUSES:
+            raise ValueError(f"unknown source check status: {status}")
+        if isinstance(warnings, (str, bytes, bytearray)):
+            raise ValueError("source check warnings must be a string sequence")
+        warning_values = tuple(warnings)
+        if not all(isinstance(item, str) for item in warning_values):
+            raise ValueError("source check warnings must be a string sequence")
+
+        cursor = self.connection.execute(
+            """
+            INSERT INTO source_checks(source, url, checked_at, result_count, status, warnings_json)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                normalized_source,
+                normalized_url,
+                normalized_time,
+                result_count,
+                status,
+                json.dumps(list(warning_values), ensure_ascii=False),
+            ),
+        )
+        self.connection.commit()
+        row = self.connection.execute(
+            "SELECT * FROM source_checks WHERE id = ?", (cursor.lastrowid,)
+        ).fetchone()
+        return self._source_check_from_row(row)
+
+    def latest_source_check(self, source: str, url: str) -> SourceCheckRecord | None:
+        if not source.strip():
+            raise ValueError("source check source cannot be empty")
+        normalized_source = normalize_source(source)
+        normalized_url = self._normalize_source_check_url(url)
+        row = self.connection.execute(
+            """
+            SELECT * FROM source_checks
+            WHERE source = ? AND url = ?
+            ORDER BY checked_at DESC, id DESC
+            LIMIT 1
+            """,
+            (normalized_source, normalized_url),
+        ).fetchone()
+        return self._source_check_from_row(row) if row is not None else None
+
+    def source_check_is_fresh(
+        self,
+        source: str,
+        url: str,
+        max_age_hours: float = 24,
+        now: datetime | None = None,
+    ) -> bool:
+        if max_age_hours < 0:
+            raise ValueError("source check max age cannot be negative")
+        latest = self.latest_source_check(source, url)
+        if latest is None:
+            return False
+        current = now or datetime.now(timezone.utc)
+        if current.tzinfo is None:
+            raise ValueError("source check comparison time must include a timezone")
+        checked = datetime.fromisoformat(latest.checked_at)
+        age_hours = (current.astimezone(timezone.utc) - checked).total_seconds() / 3600
+        return 0 <= age_hours <= max_age_hours
+
+    def list_source_checks(
+        self,
+        source: str | None = None,
+        limit: int | None = None,
+    ) -> list[SourceCheckRecord]:
+        if limit is not None and (isinstance(limit, bool) or limit < 1):
+            raise ValueError("source check list limit must be a positive integer")
+        if source is None:
+            query = "SELECT * FROM source_checks ORDER BY checked_at DESC, id DESC"
+            params: tuple[Any, ...] = ()
+        else:
+            if not source.strip():
+                raise ValueError("source check source cannot be empty")
+            query = "SELECT * FROM source_checks WHERE source = ? ORDER BY checked_at DESC, id DESC"
+            params = (normalize_source(source),)
+        if limit is not None:
+            query += " LIMIT ?"
+            params += (limit,)
+        rows = self.connection.execute(query, params).fetchall()
+        return [self._source_check_from_row(row) for row in rows]
 
     def upsert_job(self, job: JobInput) -> JobRecord:
         canonical = canonical_job_key(

@@ -87,7 +87,7 @@ git commit -m "feat: model source check history"
 ```python
 def test_empty_source_check_is_fresh_and_tracking_parameters_share_identity(self):
     first = self.store.record_source_check(
-        "company", "https://example.com/careers?utm_source=search#top",
+        "company", "https://example.com/careers?utm_source=search",
         "2026-08-04T00:00:00+00:00", 0, "empty", ["no jobs"],
     )
     latest = self.store.latest_source_check("company", "https://EXAMPLE.com/careers")
@@ -259,7 +259,7 @@ Expected: all existing and new tests pass.
 Run:
 
 ```bash
-.venv/bin/python /Users/jinzhe/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py .
+python3 <plugin-creator-root>/scripts/validate_plugin.py .
 PYTHONPATH=src:. .venv/bin/python scripts/prepare_public_release.py --check
 ```
 

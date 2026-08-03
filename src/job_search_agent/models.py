@@ -27,6 +27,7 @@ APPLICATION_STATUSES = {
 }
 
 COMMUNICATION_DIRECTIONS = {"incoming", "draft", "sent"}
+SOURCE_CHECK_STATUSES = {"ok", "empty", "warning", "unreadable"}
 
 REVIEW_DECISIONS = {
     "keep": "reviewed_keep",
@@ -147,6 +148,17 @@ class JobRecord:
     review_reason: str | None
     created_at: str
     updated_at: str
+
+
+@dataclass(frozen=True)
+class SourceCheckRecord:
+    id: int
+    source: str
+    url: str
+    checked_at: str
+    result_count: int
+    status: str
+    warnings: tuple[str, ...]
 
 
 @dataclass(frozen=True)
