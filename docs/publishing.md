@@ -20,9 +20,9 @@ codex plugin add job-search-agent@job-search-agent-public
 
 ## Local test
 
-Use the plugin creator's personal marketplace flow to expose the folder to Codex. The marketplace source must point at the plugin directory being edited. After changing skills or the manifest, refresh/reinstall the local entry and start a new Codex task so the updated skill list is loaded.
+For local development, use the repo marketplace flow above so the marketplace source points at the plugin directory being edited. After changing skills or the manifest, refresh/reinstall the entry and start a new Codex task so the updated skill list is loaded.
 
-The standalone package can also be shared as `dist/job-search-agent-*.zip`; a recipient should unpack it, validate the manifest, and run the README smoke test before installing it.
+The standalone package can also be shared as `dist/job-search-agent-*.zip`; after a GitHub Release is created, a recipient can download the release asset, validate the manifest, and run the README smoke test before installing it.
 
 ## Public submission checklist
 
