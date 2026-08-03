@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Job Search Agent</title>
+  <desc id="desc">A blue briefcase with an artificial intelligence spark.</desc>
+  <defs>
+    <linearGradient id="bg" x1="24" y1="20" x2="232" y2="236" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#4F46E5"/>
+    </linearGradient>
+    <linearGradient id="case" x1="54" y1="104" x2="202" y2="202" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EFF6FF"/>
+      <stop offset="1" stop-color="#DBEAFE"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
+  <path d="M69 100h118c11 0 20 9 20 20v66c0 11-9 20-20 20H69c-11 0-20-9-20-20v-66c0-11 9-20 20-20Z" fill="url(#case)"/>
+  <path d="M88 100V84c0-9 7-16 16-16h48c9 0 16 7 16 16v16" fill="none" stroke="#DBEAFE" stroke-width="14" stroke-linecap="round"/>
+  <path d="M49 136c34 18 124 18 158 0" fill="none" stroke="#93C5FD" stroke-width="10"/>
+  <path d="M111 132h34v18h-34z" fill="#2563EB"/>
+  <path d="M193 55v38M174 74h38" stroke="#FDE68A" stroke-width="10" stroke-linecap="round"/>
+  <path d="m161 44 5 12 12 5-12 5-5 12-5-12-12-5 12-5 5-12Z" fill="#FEF3C7"/>
+</svg>

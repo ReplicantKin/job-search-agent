@@ -1,0 +1,13 @@
+{
+  "jobs": [
+    {
+      "encryptJobId": "example-boss-100",
+      "jobName": "解决方案顾问",
+      "brandName": "示例科技",
+      "cityName": "深圳",
+      "salaryDesc": "15-25K",
+      "postDescription": "负责企业客户需求分析、方案设计和产品演示。",
+      "jobUrl": "https://www.zhipin.com/job_detail/example-boss-100.html"
+    }
+  ]
+}

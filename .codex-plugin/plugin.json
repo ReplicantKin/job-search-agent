@@ -1,0 +1,27 @@
+{
+  "name": "job-search-agent",
+  "version": "0.1.0",
+  "description": "A local-first Codex plugin for discovering, reviewing, tracking, preparing, and authorizing job applications.",
+  "author": {
+    "name": "Jinzhe"
+  },
+  "license": "MIT",
+  "keywords": ["jobs", "career", "job-search", "applications", "china"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Job Search Agent",
+    "shortDescription": "Find, review, track, and prepare job applications locally.",
+    "longDescription": "A local-first job search workspace for discovering public roles, preventing duplicate work, preparing reviewed application materials, and executing one authorized application at a time.",
+    "developerName": "Jinzhe",
+    "category": "Productivity",
+    "brandColor": "#2563EB",
+    "composerIcon": "./assets/job-search-agent-icon.svg",
+    "logo": "./assets/job-search-agent-icon.svg",
+    "capabilities": ["Interactive", "Write"],
+    "defaultPrompt": [
+      "执行今天的求职搜索，只显示新岗位和有实质更新的岗位。",
+      "检查我收藏的岗位，准备下一批投递材料。",
+      "展示岗位状态、投递证据和待跟进事项。"
+    ]
+  }
+}
