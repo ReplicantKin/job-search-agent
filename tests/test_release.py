@@ -27,6 +27,12 @@ class ReleaseTests(unittest.TestCase):
         self.assertTrue((ROOT / "TERMS.md").exists())
         self.assertTrue((ROOT / "docs" / "publishing.md").exists())
         self.assertTrue((ROOT / "docs" / "evaluation.md").exists())
+        submission_path = ROOT / "docs" / "public-submission.md"
+        self.assertTrue(submission_path.exists())
+        submission_text = submission_path.read_text(encoding="utf-8")
+        self.assertIn("5 个正向测试用例", submission_text)
+        self.assertIn("3 个反向测试用例", submission_text)
+        self.assertIn("job-search-agent-0.1.0.zip", submission_text)
         publishing_text = (ROOT / "docs" / "publishing.md").read_text(encoding="utf-8")
         self.assertIn("codex plugin marketplace add ReplicantKin/job-search-agent", publishing_text)
         self.assertIn("job-search-agent@job-search-agent-public", publishing_text)

@@ -54,3 +54,5 @@ python3 scripts/prepare_public_release.py --write \
 The helper rejects non-HTTPS URLs, embedded credentials, and URL fragments.
 
 The package is designed so publication does not require a cloud service. Actual public-directory submission still requires the publisher's repository, legal URLs, visual assets, and approval in the publishing portal.
+
+The ready-to-copy listing metadata, release notes, and exactly five positive plus three negative test cases are in [`docs/public-submission.md`](public-submission.md). The remaining portal gates are publisher identity, availability selection, upload, skill scan, and final attestations.
