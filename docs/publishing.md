@@ -25,16 +25,16 @@ The repository and legal URLs must be real before they enter the manifest. The r
 python3 scripts/prepare_public_release.py --check
 ```
 
-After the public repository and legal pages exist, fill them with the real `https://` URLs supplied by the publisher:
+For this repository, the public metadata is already filled with these URLs. If the plugin is forked, replace them with the fork's URLs:
 
 ```bash
 python3 scripts/prepare_public_release.py --write \
-  --repository https://<your-real-repository> \
-  --homepage https://<your-real-homepage> \
-  --privacy-url https://<your-real-privacy-page> \
-  --terms-url https://<your-real-terms-page>
+  --repository https://github.com/ReplicantKin/job-search-agent \
+  --homepage https://github.com/ReplicantKin/job-search-agent \
+  --privacy-url https://github.com/ReplicantKin/job-search-agent/blob/main/PRIVACY.md \
+  --terms-url https://github.com/ReplicantKin/job-search-agent/blob/main/TERMS.md
 ```
 
-The angle-bracket values above are instructions, not valid release metadata. The helper rejects non-HTTPS URLs, embedded credentials, and URL fragments.
+The helper rejects non-HTTPS URLs, embedded credentials, and URL fragments.
 
 The package is designed so publication does not require a cloud service. Actual public-directory submission still requires the publisher's repository, legal URLs, visual assets, and approval in the publishing portal.
