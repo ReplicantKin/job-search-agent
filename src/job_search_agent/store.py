@@ -196,7 +196,7 @@ class JobStore:
         self.connection.commit()
 
     @staticmethod
-    def _normalize_source_check_url(url: str) -> str:
+    def normalize_source_check_url(url: str) -> str:
         raw_url = url.strip()
         parts = urlsplit(raw_url)
         if (
@@ -246,7 +246,7 @@ class JobStore:
         if not source.strip():
             raise ValueError("source check source cannot be empty")
         normalized_source = normalize_source(source)
-        normalized_url = self._normalize_source_check_url(url)
+        normalized_url = self.normalize_source_check_url(url)
         normalized_time = self._normalize_source_check_time(checked_at)
         if isinstance(result_count, bool) or not isinstance(result_count, int) or result_count < 0:
             raise ValueError("source check result count must be a non-negative integer")
@@ -287,8 +287,10 @@ class JobStore:
         status: str,
         warnings: Sequence[str] = (),
     ) -> SourceCheckRecord:
+        if not source.strip():
+            raise ValueError("source check source cannot be empty")
         normalized_source = normalize_source(source)
-        normalized_url = self._normalize_source_check_url(url)
+        normalized_url = self.normalize_source_check_url(url)
         normalized_time = self._normalize_source_check_time(checked_at)
         if isinstance(result_count, bool) or not isinstance(result_count, int) or result_count < 0:
             raise ValueError("source check result count must be a non-negative integer")
@@ -331,7 +333,7 @@ class JobStore:
         if not source.strip():
             raise ValueError("source check source cannot be empty")
         normalized_source = normalize_source(source)
-        normalized_url = self._normalize_source_check_url(url)
+        normalized_url = self.normalize_source_check_url(url)
         row = self.connection.execute(
             """
             SELECT * FROM source_checks

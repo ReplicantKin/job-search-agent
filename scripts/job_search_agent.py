@@ -403,10 +403,11 @@ def main(argv: list[str] | None = None) -> int:
                 )
                 print(json.dumps(asdict(record), ensure_ascii=False))
             elif args.source_check_command == "status":
+                normalized_url = store.normalize_source_check_url(args.url)
                 latest = store.latest_source_check(args.source, args.url)
                 print(json.dumps({
                     "source": args.source,
-                    "url": latest.url if latest is not None else args.url,
+                    "url": latest.url if latest is not None else normalized_url,
                     "fresh": store.source_check_is_fresh(
                         args.source,
                         args.url,

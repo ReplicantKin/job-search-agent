@@ -342,6 +342,22 @@ class CliTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(json.loads(output), [])
 
+    def test_source_check_status_normalizes_a_new_url(self):
+        exit_code, output = self.run_cli(
+            "source-check",
+            "status",
+            "--source",
+            "company",
+            "--url",
+            "https://example.com/careers?utm_source=status",
+        )
+
+        self.assertEqual(exit_code, 0)
+        status = json.loads(output)
+        self.assertFalse(status["fresh"])
+        self.assertEqual(status["url"], "https://example.com/careers")
+        self.assertIsNone(status["latest"])
+
     def test_importing_the_same_export_twice_does_not_duplicate_application_attempts(self):
         self.run_cli("ingest", "--json", str(self.input_file))
         _, review_output = self.run_cli("list", "--queue", "review", "--format", "json")
