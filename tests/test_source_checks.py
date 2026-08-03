@@ -1,4 +1,5 @@
 import json
+import sqlite3
 import tempfile
 import unittest
 from datetime import datetime, timezone
@@ -132,6 +133,81 @@ class SourceCheckStoreTests(unittest.TestCase):
         self.assertNotIn("do-not-save", exported)
         self.assertNotIn("token-value", exported)
         self.assertNotIn("cookie-value", exported)
+
+    def test_source_check_warning_uses_a_safe_format_allowlist(self):
+        record = self.store.record_source_check(
+            "company",
+            "https://example.com/careers",
+            "2026-08-04T00:00:00+00:00",
+            0,
+            "warning",
+            [
+                "refresh_token=keep-out",
+                '{"password":"keep-out"}',
+                "raw response body: <div>keep-out</div>",
+                "/tmp/keep-out",
+            ],
+        )
+
+        self.assertEqual(
+            record.warnings,
+            (
+                "[warning omitted: unsupported warning format]",
+                "[warning omitted: unsupported warning format]",
+                "[warning omitted: unsupported warning format]",
+                "[warning omitted: unsupported warning format]",
+            ),
+        )
+
+    def test_opening_a_legacy_database_scrubs_existing_source_warnings(self):
+        legacy_path = Path(self.temp_dir.name) / "legacy.sqlite3"
+        connection = sqlite3.connect(legacy_path)
+        connection.execute(
+            """
+            CREATE TABLE source_checks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source TEXT NOT NULL,
+                url TEXT NOT NULL,
+                checked_at TEXT NOT NULL,
+                result_count INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                warnings_json TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO source_checks(source, url, checked_at, result_count, status, warnings_json)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "company",
+                "https://example.com/careers",
+                "2026-08-04T00:00:00+00:00",
+                0,
+                "warning",
+                json.dumps(["password=legacy-secret", "raw browser output: <html>legacy</html>"]),
+            ),
+        )
+        connection.commit()
+        connection.close()
+
+        legacy_store = JobStore.open(legacy_path)
+        try:
+            self.assertEqual(
+                legacy_store.list_source_checks()[0].warnings,
+                (
+                    "[warning omitted: unsupported warning format]",
+                    "[warning omitted: unsupported warning format]",
+                ),
+            )
+        finally:
+            legacy_store.close()
+
+        connection = sqlite3.connect(legacy_path)
+        raw_warnings = connection.execute("SELECT warnings_json FROM source_checks").fetchone()[0]
+        connection.close()
+        self.assertNotIn("legacy-secret", raw_warnings)
 
 
 if __name__ == "__main__":

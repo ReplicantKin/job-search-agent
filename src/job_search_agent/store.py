@@ -33,11 +33,29 @@ from .models import (
 
 
 _SOURCE_WARNING_MAX_LENGTH = 240
-_SOURCE_WARNING_SECRET_RE = re.compile(
-    r"(?i)\b(password|passwd|token|secret|cookie|authorization|api[-_]?key)\b\s*[:=]\s*\S+"
+_SOURCE_WARNING_UNSUPPORTED = "[warning omitted: unsupported warning format]"
+_SAFE_SOURCE_WARNING_TEXT = {
+    "no jobs": "no jobs",
+    "no current jobs": "no current jobs",
+    "no current jobs visible": "no current jobs visible",
+    "no jobposting record found": "no JobPosting record found",
+    "no jobposting json-ld record found": "no JobPosting JSON-LD record found",
+    "invalid json-ld block was ignored": "invalid JSON-LD block was ignored",
+    "capture is neither valid json nor supported jobposting html": "capture is neither valid JSON nor supported JobPosting HTML",
+    "json capture has no jobs array or recognizable job record": "JSON capture has no jobs array or recognizable job record",
+    "json capture must be an object or array": "JSON capture must be an object or array",
+    "some capture entries were ignored because they were not objects": "some capture entries were ignored because they were not objects",
+    "captcha required": "CAPTCHA required",
+    "mfa required": "MFA required",
+    "login required": "login required",
+    "page unavailable": "page unavailable",
+    "source page unreadable": "source page unreadable",
+    _SOURCE_WARNING_UNSUPPORTED.casefold(): _SOURCE_WARNING_UNSUPPORTED,
+    "[warning omitted: raw browser content]": "[warning omitted: raw browser content]",
+}
+_SOURCE_WARNING_MISSING_FIELD_RE = re.compile(
+    r"(?i)^record\s+\d+\s+missing\s+(source_job_id|title|company|location|description|url)$"
 )
-_SOURCE_WARNING_BEARER_RE = re.compile(r"(?i)\bbearer\s+\S+")
-_SOURCE_WARNING_PATH_RE = re.compile(r"(?:/(?:Users|private/var)/|[A-Za-z]:[\\/])\S*")
 
 
 def _normalize_source_check_warnings(warnings: Sequence[str]) -> tuple[str, ...]:
@@ -50,16 +68,28 @@ def _normalize_source_check_warnings(warnings: Sequence[str]) -> tuple[str, ...]
         text = " ".join(warning.split())
         if not text:
             continue
-        if re.search(r"(?i)<(?:html|script|head|body)\b|document\.cookie", text):
-            text = "[warning omitted: raw browser content]"
+        safe_text = _SAFE_SOURCE_WARNING_TEXT.get(text.casefold())
+        missing_field = _SOURCE_WARNING_MISSING_FIELD_RE.fullmatch(text)
+        if safe_text is not None:
+            text = safe_text
+        elif missing_field is not None:
+            text = f"record missing {missing_field.group(1).casefold()}"
         else:
-            text = _SOURCE_WARNING_SECRET_RE.sub(r"\1=[secret omitted]", text)
-            text = _SOURCE_WARNING_BEARER_RE.sub("Bearer [secret omitted]", text)
-            text = _SOURCE_WARNING_PATH_RE.sub("[local path omitted]", text)
+            text = _SOURCE_WARNING_UNSUPPORTED
         if len(text) > _SOURCE_WARNING_MAX_LENGTH:
             text = text[:_SOURCE_WARNING_MAX_LENGTH - 14] + "...[truncated]"
         normalized.append(text)
     return tuple(normalized)
+
+
+def _decode_source_check_warnings(serialized: str) -> tuple[str, ...]:
+    try:
+        warnings = json.loads(serialized)
+    except (TypeError, json.JSONDecodeError):
+        return (_SOURCE_WARNING_UNSUPPORTED,)
+    if not isinstance(warnings, list):
+        return (_SOURCE_WARNING_UNSUPPORTED,)
+    return _normalize_source_check_warnings(warnings)
 
 
 def _redact_local_paths(value: Any) -> Any:
@@ -224,7 +254,19 @@ class JobStore:
             CREATE INDEX IF NOT EXISTS idx_communications_job ON communications(job_id, created_at);
             """
         )
+        self._sanitize_existing_source_checks()
         self.connection.commit()
+
+    def _sanitize_existing_source_checks(self) -> None:
+        rows = self.connection.execute("SELECT id, warnings_json FROM source_checks").fetchall()
+        for row in rows:
+            safe_warnings = _decode_source_check_warnings(row["warnings_json"])
+            serialized = json.dumps(list(safe_warnings), ensure_ascii=False)
+            if serialized != row["warnings_json"]:
+                self.connection.execute(
+                    "UPDATE source_checks SET warnings_json = ? WHERE id = ?",
+                    (serialized, row["id"]),
+                )
 
     @staticmethod
     def normalize_source_check_url(url: str) -> str:
@@ -252,9 +294,7 @@ class JobStore:
 
     @staticmethod
     def _source_check_from_row(row: sqlite3.Row) -> SourceCheckRecord:
-        warnings = json.loads(row["warnings_json"])
-        if not isinstance(warnings, list) or not all(isinstance(item, str) for item in warnings):
-            raise ValueError("stored source check warnings must be a string array")
+        warnings = _decode_source_check_warnings(row["warnings_json"])
         return SourceCheckRecord(
             id=row["id"],
             source=row["source"],
@@ -262,7 +302,7 @@ class JobStore:
             checked_at=row["checked_at"],
             result_count=row["result_count"],
             status=row["status"],
-            warnings=tuple(warnings),
+            warnings=warnings,
         )
 
     def record_source_check(
