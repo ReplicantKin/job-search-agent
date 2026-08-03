@@ -209,6 +209,48 @@ class SourceCheckStoreTests(unittest.TestCase):
         connection.close()
         self.assertNotIn("legacy-secret", raw_warnings)
 
+    def test_opening_a_legacy_database_handles_malformed_warning_arrays(self):
+        legacy_path = Path(self.temp_dir.name) / "malformed-legacy.sqlite3"
+        connection = sqlite3.connect(legacy_path)
+        connection.execute(
+            """
+            CREATE TABLE source_checks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                source TEXT NOT NULL,
+                url TEXT NOT NULL,
+                checked_at TEXT NOT NULL,
+                result_count INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                warnings_json TEXT NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            INSERT INTO source_checks(source, url, checked_at, result_count, status, warnings_json)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "company",
+                "https://example.com/careers",
+                "2026-08-04T00:00:00+00:00",
+                0,
+                "warning",
+                json.dumps(["valid", 3]),
+            ),
+        )
+        connection.commit()
+        connection.close()
+
+        legacy_store = JobStore.open(legacy_path)
+        try:
+            self.assertEqual(
+                legacy_store.list_source_checks()[0].warnings,
+                ("[warning omitted: unsupported warning format]",),
+            )
+        finally:
+            legacy_store.close()
+
 
 if __name__ == "__main__":
     unittest.main()

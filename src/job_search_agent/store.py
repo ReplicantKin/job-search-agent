@@ -38,6 +38,7 @@ _SAFE_SOURCE_WARNING_TEXT = {
     "no jobs": "no jobs",
     "no current jobs": "no current jobs",
     "no current jobs visible": "no current jobs visible",
+    "no current roles visible": "no current roles visible",
     "no jobposting record found": "no JobPosting record found",
     "no jobposting json-ld record found": "no JobPosting JSON-LD record found",
     "invalid json-ld block was ignored": "invalid JSON-LD block was ignored",
@@ -59,7 +60,7 @@ _SOURCE_WARNING_MISSING_FIELD_RE = re.compile(
 
 
 def _normalize_source_check_warnings(warnings: Sequence[str]) -> tuple[str, ...]:
-    if isinstance(warnings, (str, bytes, bytearray)):
+    if not isinstance(warnings, (list, tuple)):
         raise ValueError("source check warnings must be a string sequence")
     normalized: list[str] = []
     for warning in warnings:
@@ -89,7 +90,10 @@ def _decode_source_check_warnings(serialized: str) -> tuple[str, ...]:
         return (_SOURCE_WARNING_UNSUPPORTED,)
     if not isinstance(warnings, list):
         return (_SOURCE_WARNING_UNSUPPORTED,)
-    return _normalize_source_check_warnings(warnings)
+    try:
+        return _normalize_source_check_warnings(warnings)
+    except (TypeError, ValueError):
+        return (_SOURCE_WARNING_UNSUPPORTED,)
 
 
 def _redact_local_paths(value: Any) -> Any:

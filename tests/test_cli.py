@@ -385,6 +385,30 @@ class CliTests(unittest.TestCase):
         self.assertIn("https://example.com/careers", markdown)
         self.assertIn("no current jobs", markdown)
 
+    def test_import_rejects_null_source_check_warnings_without_crashing(self):
+        malformed = self.root / "malformed-source-checks.json"
+        malformed.write_text(
+            json.dumps(
+                {
+                    "source_checks": [
+                        {
+                            "source": "company",
+                            "url": "https://example.com/careers",
+                            "checked_at": "2026-08-04T00:00:00+00:00",
+                            "result_count": 0,
+                            "status": "warning",
+                            "warnings": None,
+                        }
+                    ]
+                }
+            ),
+            encoding="utf-8",
+        )
+
+        exit_code, _ = self.run_cli("import", "--json", str(malformed))
+
+        self.assertEqual(exit_code, 2)
+
     def test_importing_the_same_export_twice_does_not_duplicate_application_attempts(self):
         self.run_cli("ingest", "--json", str(self.input_file))
         _, review_output = self.run_cli("list", "--queue", "review", "--format", "json")
