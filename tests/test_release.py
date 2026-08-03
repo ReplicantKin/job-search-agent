@@ -32,7 +32,7 @@ class ReleaseTests(unittest.TestCase):
         submission_text = submission_path.read_text(encoding="utf-8")
         self.assertIn("5 个正向测试用例", submission_text)
         self.assertIn("3 个反向测试用例", submission_text)
-        self.assertIn("job-search-agent-0.1.3.zip", submission_text)
+        self.assertIn("job-search-agent-0.1.4.zip", submission_text)
         publishing_text = (ROOT / "docs" / "publishing.md").read_text(encoding="utf-8")
         self.assertIn("codex plugin marketplace add ReplicantKin/job-search-agent", publishing_text)
         self.assertIn("job-search-agent@job-search-agent-public", publishing_text)
@@ -71,6 +71,14 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(entry["policy"], {"installation": "AVAILABLE", "authentication": "ON_INSTALL"})
         self.assertEqual(entry["category"], "Productivity")
 
+    def test_release_docs_describe_source_check_history(self):
+        discovery = (ROOT / "skills" / "job-discovery" / "SKILL.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertIn("source-check status", discovery)
+        self.assertIn("source-check record", discovery)
+        self.assertIn("source_checks", readme)
+
     def test_public_package_contains_no_personal_workspace_paths(self):
         forbidden = ("/Users/", "/private/var/", "求职" + "上下文.md", "automation-" + "8")
         for path in ROOT.rglob("*"):
@@ -99,7 +107,7 @@ class ReleaseTests(unittest.TestCase):
                 capture_output=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            archive = Path(directory) / "job-search-agent-0.1.3.zip"
+            archive = Path(directory) / "job-search-agent-0.1.4.zip"
             self.assertTrue(archive.exists())
             with zipfile.ZipFile(archive) as package:
                 names = set(package.namelist())
@@ -122,7 +130,7 @@ class ReleaseTests(unittest.TestCase):
                 capture_output=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            archive = output_dir / "job-search-agent-0.1.3.zip"
+            archive = output_dir / "job-search-agent-0.1.4.zip"
             install_dir = Path(directory) / "installed"
             install_dir.mkdir()
             with zipfile.ZipFile(archive) as package:

@@ -141,6 +141,30 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     communication_list = communication_subparsers.add_parser("list")
     communication_list.add_argument("job_id")
     communication_list.add_argument("--format", choices=["json", "table"], default="table")
+
+    source_check = subparsers.add_parser("source-check")
+    source_check_subparsers = source_check.add_subparsers(dest="source_check_command", required=True)
+    source_check_record = source_check_subparsers.add_parser("record")
+    source_check_record.add_argument("--source", required=True)
+    source_check_record.add_argument("--url", required=True)
+    source_check_record.add_argument("--result-count", required=True, type=int)
+    source_check_record.add_argument(
+        "--status",
+        required=True,
+        choices=["ok", "empty", "warning", "unreadable"],
+    )
+    source_check_record.add_argument("--warning", action="append", default=[])
+    source_check_record.add_argument("--checked-at", default=None)
+
+    source_check_status = source_check_subparsers.add_parser("status")
+    source_check_status.add_argument("--source", required=True)
+    source_check_status.add_argument("--url", required=True)
+    source_check_status.add_argument("--max-age-hours", type=float, default=24)
+
+    source_check_list = source_check_subparsers.add_parser("list")
+    source_check_list.add_argument("--source")
+    source_check_list.add_argument("--limit", type=int)
+    source_check_list.add_argument("--format", choices=["json", "table"], default="table")
     return parser.parse_args(argv)
 
 
@@ -243,6 +267,15 @@ def _import_export(store: JobStore, data: dict[str, Any]) -> int:
             current = store.get_job(job.id)
             if current.screening_status != screening or current.review_reason != raw.get("review_reason"):
                 store.review_job(job.id, ReviewDecision(reverse[screening], raw.get("review_reason")))
+    for raw in data.get("source_checks", []):
+        store.import_source_check(
+            raw["source"],
+            raw["url"],
+            raw["checked_at"],
+            raw["result_count"],
+            raw["status"],
+            raw.get("warnings", []),
+        )
     for raw in data.get("applications", []):
         new_job_id = id_map.get(raw["job_id"])
         if new_job_id is None:
@@ -358,6 +391,43 @@ def main(argv: list[str] | None = None) -> int:
                 "job_ids": [job.id for job in records],
                 "warnings": warnings,
             }, ensure_ascii=False))
+        elif args.command == "source-check":
+            if args.source_check_command == "record":
+                record = store.record_source_check(
+                    args.source,
+                    args.url,
+                    args.checked_at or now_iso(),
+                    args.result_count,
+                    args.status,
+                    args.warning,
+                )
+                print(json.dumps(asdict(record), ensure_ascii=False))
+            elif args.source_check_command == "status":
+                latest = store.latest_source_check(args.source, args.url)
+                print(json.dumps({
+                    "source": args.source,
+                    "url": latest.url if latest is not None else args.url,
+                    "fresh": store.source_check_is_fresh(
+                        args.source,
+                        args.url,
+                        max_age_hours=args.max_age_hours,
+                    ),
+                    "latest": asdict(latest) if latest is not None else None,
+                }, ensure_ascii=False))
+            else:
+                records = store.list_source_checks(args.source, args.limit)
+                if args.format == "json":
+                    print(json.dumps([asdict(record) for record in records], ensure_ascii=False, indent=2))
+                else:
+                    if not records:
+                        print("No source checks recorded.")
+                    else:
+                        print("ID\tSource\tURL\tChecked At\tCount\tStatus")
+                        for record in records:
+                            print("\t".join([
+                                str(record.id), record.source, record.url,
+                                record.checked_at, str(record.result_count), record.status,
+                            ]))
         elif args.command == "list":
             _print_jobs(store.list_jobs(args.queue), args.format)
         elif args.command == "review":

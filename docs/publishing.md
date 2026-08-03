@@ -24,7 +24,7 @@ For local development, use the repo marketplace flow above so the marketplace so
 
 The standalone package can also be shared as `dist/job-search-agent-*.zip`; after a GitHub Release is created, a recipient can download the release asset, validate the manifest, and run the README smoke test before installing it.
 
-The current release asset is [job-search-agent-0.1.3.zip](https://github.com/ReplicantKin/job-search-agent/releases/download/v0.1.3/job-search-agent-0.1.3.zip).
+The current release asset is [job-search-agent-0.1.4.zip](https://github.com/ReplicantKin/job-search-agent/releases/download/v0.1.4/job-search-agent-0.1.4.zip).
 
 ## Public submission checklist
 

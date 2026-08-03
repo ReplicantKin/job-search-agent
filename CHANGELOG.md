@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4
+
+- Add append-only local source-page check history with a 24-hour freshness query.
+- Record empty, warning, and unreadable source checks separately from job screening and application state.
+- Expose `source-check record`, `source-check status`, and `source-check list` commands and preserve checks through privacy-safe export/import.
+
 ## 0.1.3
 
 - Clarify which preferences are natively scored locally and which require live-page evidence or an AI/manual check.

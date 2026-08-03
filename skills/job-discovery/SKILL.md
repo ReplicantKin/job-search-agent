@@ -29,7 +29,23 @@ For each daily run, make one focused search pass in this order:
 2. Search official recruiting feeds or public company job pages for roles not covered by the first pass.
 3. Search BOSS 直聘, 猎聘, and 前程无忧 using the approved role/location terms.
 
-Use the current visible result page and preserve its exact URL plus the check time. Do not repeat a source URL already present in the local source history unless the user changed a search preference or the page has a meaningful update. Do not use an old aggregator snippet as a fresh posting.
+Before opening a source URL, check the local source history:
+
+```bash
+python3 scripts/job_search_agent.py source-check status \
+  --source company --url 'https://careers.example.com/search?q=ROLE' \
+  --max-age-hours 24
+```
+
+If the result is `fresh: true`, do not open that source again unless the user changed a search preference or explicitly asked for a fresh check. After actually inspecting the visible page, record the check, including empty results and warnings:
+
+```bash
+python3 scripts/job_search_agent.py source-check record \
+  --source company --url 'https://careers.example.com/search?q=ROLE' \
+  --result-count 0 --status empty --warning 'no current roles visible'
+```
+
+Use the current visible result page and preserve its exact URL plus the check time. Do not use an old aggregator snippet as a fresh posting. Source freshness is not evidence that an individual role is still open; verify the role detail page before showing it.
 
 Before showing a role, apply hard exclusions, then the local deduplication rules, then the fit prefilter. A role that is already reviewed, saved, applied, rejected, or otherwise present in the local history should not be shown as a new discovery; show it only when its job description, title, location, employer, or detail URL materially changed.
 

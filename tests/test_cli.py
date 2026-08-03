@@ -259,6 +259,89 @@ class CliTests(unittest.TestCase):
         self.assertEqual(payload["applications"][0]["evidence"], {"application_id": "cli-app-1"})
         self.assertTrue(payload["events"])
 
+    def test_source_check_record_and_status_are_json_serializable(self):
+        exit_code, output = self.run_cli(
+            "source-check",
+            "record",
+            "--source",
+            "company",
+            "--url",
+            "https://example.com/careers?utm_source=test",
+            "--result-count",
+            "0",
+            "--status",
+            "empty",
+            "--warning",
+            "no jobs",
+        )
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(json.loads(output)["url"], "https://example.com/careers")
+
+        exit_code, output = self.run_cli(
+            "source-check",
+            "status",
+            "--source",
+            "company",
+            "--url",
+            "https://example.com/careers",
+            "--max-age-hours",
+            "24",
+        )
+
+        self.assertEqual(exit_code, 0)
+        status = json.loads(output)
+        self.assertTrue(status["fresh"])
+        self.assertEqual(status["latest"]["result_count"], 0)
+
+    def test_source_checks_survive_idempotent_export_import(self):
+        self.run_cli(
+            "source-check",
+            "record",
+            "--source",
+            "company",
+            "--url",
+            "https://example.com/careers",
+            "--result-count",
+            "2",
+            "--status",
+            "ok",
+            "--checked-at",
+            "2026-08-04T00:00:00+00:00",
+        )
+        exported = self.root / "export.json"
+        markdown = self.root / "export.md"
+
+        self.assertEqual(
+            self.run_cli("export", "--json", str(exported), "--markdown", str(markdown))[0],
+            0,
+        )
+        self.assertEqual(self.run_cli("import", "--json", str(exported))[0], 0)
+        self.assertEqual(
+            len(json.loads(self.run_cli("source-check", "list", "--format", "json")[1])),
+            1,
+        )
+        self.assertIn("source_checks", json.loads(exported.read_text(encoding="utf-8")))
+
+    def test_source_check_rejects_http_without_writing_history(self):
+        exit_code, _ = self.run_cli(
+            "source-check",
+            "record",
+            "--source",
+            "company",
+            "--url",
+            "http://example.com/careers",
+            "--result-count",
+            "1",
+            "--status",
+            "ok",
+        )
+
+        self.assertEqual(exit_code, 2)
+        exit_code, output = self.run_cli("source-check", "list", "--format", "json")
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(json.loads(output), [])
+
     def test_importing_the_same_export_twice_does_not_duplicate_application_attempts(self):
         self.run_cli("ingest", "--json", str(self.input_file))
         _, review_output = self.run_cli("list", "--queue", "review", "--format", "json")

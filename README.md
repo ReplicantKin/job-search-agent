@@ -13,6 +13,7 @@ Job Search Agent is a publishable, local-first Codex plugin for discovering publ
 - Records application materials, evidence, and execution events.
 - Exports non-secret data as JSON or Markdown.
 - Supports an opt-in local credential store for sites that require a saved login.
+- Records source-page checks separately from job screening, including empty results and parser warnings.
 
 The first release is designed for China-based job seekers. It includes offline capture adapters for common BOSS 直聘, 猎聘, 前程无忧, company career-page, and official ATS fields; live page access remains browser- and site-layout-dependent.
 
@@ -83,6 +84,19 @@ python3 scripts/job_search_agent.py ingest --source company \
 ```
 
 The source adapter accepts common BOSS 直聘、猎聘、前程无忧 capture fields and company/ATS `JobPosting` JSON-LD. Incomplete records are returned as warnings and are not inserted.
+
+Record and inspect source-page checks so a daily run does not repeatedly inspect a fresh search URL:
+
+```bash
+python3 scripts/job_search_agent.py source-check status \
+  --source company --url 'https://careers.example.com/search?q=ROLE'
+python3 scripts/job_search_agent.py source-check record \
+  --source company --url 'https://careers.example.com/search?q=ROLE' \
+  --result-count 3 --status ok
+python3 scripts/job_search_agent.py source-check list --format json
+```
+
+The default freshness window is 24 hours. Source history is only a record that the page was checked; it never proves that a job is still open. It is included in local JSON exports as `source_checks` and contains no credentials or browser session data.
 
 After reviewing a role, move it into the application queue:
 

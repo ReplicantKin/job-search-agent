@@ -278,6 +278,55 @@ class JobStore:
         ).fetchone()
         return self._source_check_from_row(row)
 
+    def import_source_check(
+        self,
+        source: str,
+        url: str,
+        checked_at: str,
+        result_count: int,
+        status: str,
+        warnings: Sequence[str] = (),
+    ) -> SourceCheckRecord:
+        normalized_source = normalize_source(source)
+        normalized_url = self._normalize_source_check_url(url)
+        normalized_time = self._normalize_source_check_time(checked_at)
+        if isinstance(result_count, bool) or not isinstance(result_count, int) or result_count < 0:
+            raise ValueError("source check result count must be a non-negative integer")
+        if status not in SOURCE_CHECK_STATUSES:
+            raise ValueError(f"unknown source check status: {status}")
+        if isinstance(warnings, (str, bytes, bytearray)):
+            raise ValueError("source check warnings must be a string sequence")
+        warning_values = tuple(warnings)
+        if not all(isinstance(item, str) for item in warning_values):
+            raise ValueError("source check warnings must be a string sequence")
+        warnings_json = json.dumps(list(warning_values), ensure_ascii=False)
+        row = self.connection.execute(
+            """
+            SELECT * FROM source_checks
+            WHERE source = ? AND url = ? AND checked_at = ? AND result_count = ?
+                AND status = ? AND warnings_json = ?
+            LIMIT 1
+            """,
+            (
+                normalized_source,
+                normalized_url,
+                normalized_time,
+                result_count,
+                status,
+                warnings_json,
+            ),
+        ).fetchone()
+        if row is not None:
+            return self._source_check_from_row(row)
+        return self.record_source_check(
+            normalized_source,
+            normalized_url,
+            normalized_time,
+            result_count,
+            status,
+            warning_values,
+        )
+
     def latest_source_check(self, source: str, url: str) -> SourceCheckRecord | None:
         if not source.strip():
             raise ValueError("source check source cannot be empty")
@@ -824,6 +873,7 @@ class JobStore:
     def export_json(self) -> dict[str, Any]:
         jobs = [dict(row) for row in self.connection.execute("SELECT * FROM jobs ORDER BY created_at").fetchall()]
         sources = [dict(row) for row in self.connection.execute("SELECT * FROM job_sources ORDER BY first_seen_at").fetchall()]
+        source_checks = [asdict(record) for record in self.list_source_checks()]
         applications = []
         for row in self.connection.execute("SELECT * FROM applications ORDER BY created_at").fetchall():
             data = dict(row)
@@ -852,6 +902,7 @@ class JobStore:
             "profile": self.get_profile(),
             "jobs": jobs,
             "job_sources": sources,
+            "source_checks": source_checks,
             "applications": applications,
             "events": events,
             "materials": materials,

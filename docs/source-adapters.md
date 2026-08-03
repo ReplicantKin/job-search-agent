@@ -23,4 +23,16 @@ python3 scripts/job_search_agent.py ingest \
 
 The adapter itself performs no network access; the browser/search layer or an explicit user-provided capture supplies the JSON/HTML. A detail-page capture may use the checked page URL when the page does not repeat its canonical URL.
 
+Use the local source-check history around each browser/search pass:
+
+```bash
+python3 scripts/job_search_agent.py source-check status \
+  --source greenhouse --url 'https://boards.greenhouse.io/example/jobs'
+python3 scripts/job_search_agent.py source-check record \
+  --source greenhouse --url 'https://boards.greenhouse.io/example/jobs' \
+  --result-count 4 --status ok
+```
+
+The default freshness window is 24 hours. Empty, warning, and unreadable pages may be recorded, but they are not proof of current job availability. The source check is a local audit record and does not perform network access itself.
+
 An adapter must report what it actually did. Unsupported or failed execution returns warnings/manual fallback, never a false job record or false submission success.
