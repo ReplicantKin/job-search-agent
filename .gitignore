@@ -8,6 +8,7 @@ export.json
 export.md
 dist/
 *.zip
+.worktrees/
 
 # Internal planning notes are kept locally and are not part of the public release.
 docs/superpowers/
