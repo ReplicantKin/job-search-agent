@@ -91,6 +91,7 @@ class SourceCheckStoreTests(unittest.TestCase):
             {"result_count": -1},
             {"warnings": ["ok", 3]},
             {"url": "https://example.com/careers#results"},
+            {"url": "https://example.com/careers#"},
         )
 
         for overrides in invalid_values:
@@ -107,6 +108,30 @@ class SourceCheckStoreTests(unittest.TestCase):
                 self.store.record_source_check(**values)
 
         self.assertEqual(self.store.list_source_checks(), [])
+
+    def test_source_check_warning_is_bounded_and_redacts_secrets_and_local_paths(self):
+        record = self.store.record_source_check(
+            "company",
+            "https://example.com/careers",
+            "2026-08-04T00:00:00+00:00",
+            0,
+            "warning",
+            [
+                "password=do-not-save token=token-value cookie=cookie-value "
+                "/Users/jinzhe/private/browser-output " + "x" * 400,
+            ],
+        )
+
+        warning = record.warnings[0]
+        self.assertLessEqual(len(warning), 240)
+        self.assertNotIn("do-not-save", warning)
+        self.assertNotIn("token-value", warning)
+        self.assertNotIn("cookie-value", warning)
+        self.assertNotIn("/Users/jinzhe", warning)
+        exported = json.dumps(self.store.export_json(), ensure_ascii=False)
+        self.assertNotIn("do-not-save", exported)
+        self.assertNotIn("token-value", exported)
+        self.assertNotIn("cookie-value", exported)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import re
 import secrets
 import sqlite3
 import time
@@ -29,6 +30,36 @@ from .models import (
     now_iso,
     sanitize_evidence,
 )
+
+
+_SOURCE_WARNING_MAX_LENGTH = 240
+_SOURCE_WARNING_SECRET_RE = re.compile(
+    r"(?i)\b(password|passwd|token|secret|cookie|authorization|api[-_]?key)\b\s*[:=]\s*\S+"
+)
+_SOURCE_WARNING_BEARER_RE = re.compile(r"(?i)\bbearer\s+\S+")
+_SOURCE_WARNING_PATH_RE = re.compile(r"(?:/(?:Users|private/var)/|[A-Za-z]:[\\/])\S*")
+
+
+def _normalize_source_check_warnings(warnings: Sequence[str]) -> tuple[str, ...]:
+    if isinstance(warnings, (str, bytes, bytearray)):
+        raise ValueError("source check warnings must be a string sequence")
+    normalized: list[str] = []
+    for warning in warnings:
+        if not isinstance(warning, str):
+            raise ValueError("source check warnings must be a string sequence")
+        text = " ".join(warning.split())
+        if not text:
+            continue
+        if re.search(r"(?i)<(?:html|script|head|body)\b|document\.cookie", text):
+            text = "[warning omitted: raw browser content]"
+        else:
+            text = _SOURCE_WARNING_SECRET_RE.sub(r"\1=[secret omitted]", text)
+            text = _SOURCE_WARNING_BEARER_RE.sub("Bearer [secret omitted]", text)
+            text = _SOURCE_WARNING_PATH_RE.sub("[local path omitted]", text)
+        if len(text) > _SOURCE_WARNING_MAX_LENGTH:
+            text = text[:_SOURCE_WARNING_MAX_LENGTH - 14] + "...[truncated]"
+        normalized.append(text)
+    return tuple(normalized)
 
 
 def _redact_local_paths(value: Any) -> Any:
@@ -204,7 +235,7 @@ class JobStore:
             or not parts.netloc
             or parts.username is not None
             or parts.password is not None
-            or parts.fragment
+            or "#" in raw_url
         ):
             raise ValueError("source check URL must be HTTPS without credentials or fragments")
         return canonical_url(raw_url)
@@ -252,11 +283,7 @@ class JobStore:
             raise ValueError("source check result count must be a non-negative integer")
         if status not in SOURCE_CHECK_STATUSES:
             raise ValueError(f"unknown source check status: {status}")
-        if isinstance(warnings, (str, bytes, bytearray)):
-            raise ValueError("source check warnings must be a string sequence")
-        warning_values = tuple(warnings)
-        if not all(isinstance(item, str) for item in warning_values):
-            raise ValueError("source check warnings must be a string sequence")
+        warning_values = _normalize_source_check_warnings(warnings)
 
         cursor = self.connection.execute(
             """
@@ -296,11 +323,7 @@ class JobStore:
             raise ValueError("source check result count must be a non-negative integer")
         if status not in SOURCE_CHECK_STATUSES:
             raise ValueError(f"unknown source check status: {status}")
-        if isinstance(warnings, (str, bytes, bytearray)):
-            raise ValueError("source check warnings must be a string sequence")
-        warning_values = tuple(warnings)
-        if not all(isinstance(item, str) for item in warning_values):
-            raise ValueError("source check warnings must be a string sequence")
+        warning_values = _normalize_source_check_warnings(warnings)
         warnings_json = json.dumps(list(warning_values), ensure_ascii=False)
         row = self.connection.execute(
             """

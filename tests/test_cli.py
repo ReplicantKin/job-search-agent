@@ -358,6 +358,33 @@ class CliTests(unittest.TestCase):
         self.assertEqual(status["url"], "https://example.com/careers")
         self.assertIsNone(status["latest"])
 
+    def test_markdown_export_includes_source_check_summary(self):
+        self.run_cli(
+            "source-check",
+            "record",
+            "--source",
+            "company",
+            "--url",
+            "https://example.com/careers",
+            "--result-count",
+            "0",
+            "--status",
+            "empty",
+            "--warning",
+            "no current jobs",
+        )
+        markdown_file = self.root / "source-checks.md"
+        json_file = self.root / "source-checks.json"
+
+        self.assertEqual(
+            self.run_cli("export", "--json", str(json_file), "--markdown", str(markdown_file))[0],
+            0,
+        )
+        markdown = markdown_file.read_text(encoding="utf-8")
+        self.assertIn("## Source Checks", markdown)
+        self.assertIn("https://example.com/careers", markdown)
+        self.assertIn("no current jobs", markdown)
+
     def test_importing_the_same_export_twice_does_not_duplicate_application_attempts(self):
         self.run_cli("ingest", "--json", str(self.input_file))
         _, review_output = self.run_cli("list", "--queue", "review", "--format", "json")

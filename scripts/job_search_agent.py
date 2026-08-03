@@ -212,6 +212,17 @@ def _ranked_job_payload(jobs: list[Any], profile: dict[str, Any]) -> list[dict[s
 
 def _markdown_export(data: dict[str, Any]) -> str:
     lines = ["# Job Search Agent Export", "", f"Jobs: {len(data['jobs'])}", ""]
+    if data.get("source_checks"):
+        lines.extend(["## Source Checks", ""])
+        for check in data["source_checks"]:
+            lines.append(
+                f"- `{check['source']}` — {check['url']} — "
+                f"{check['checked_at']} — {check['result_count']} jobs — `{check['status']}`"
+            )
+            warnings = [" ".join(str(item).split()) for item in check.get("warnings", []) if str(item).strip()]
+            if warnings:
+                lines.append(f"  - Warnings: {'; '.join(warnings)}")
+        lines.append("")
     applications_by_job: dict[str, list[dict[str, Any]]] = {}
     for application in data.get("applications", []):
         applications_by_job.setdefault(application["job_id"], []).append(application)
