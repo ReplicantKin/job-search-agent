@@ -12,13 +12,17 @@ from scripts.prepare_public_release import (
 
 
 class PublicReleaseTests(unittest.TestCase):
-    def test_current_manifest_reports_missing_real_public_urls(self):
+    def test_current_manifest_has_real_public_urls(self):
         manifest = json.loads(
             (Path(__file__).resolve().parents[1] / ".codex-plugin" / "plugin.json").read_text(
                 encoding="utf-8"
             )
         )
         issues = public_release_issues(manifest)
+        self.assertEqual(issues, {"missing": [], "invalid": []})
+
+    def test_missing_manifest_reports_required_public_urls(self):
+        issues = public_release_issues({"interface": {"displayName": "Job Search Agent"}})
         self.assertEqual(
             issues["missing"],
             [

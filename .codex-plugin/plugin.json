@@ -3,10 +3,17 @@
   "version": "0.1.0",
   "description": "A local-first Codex plugin for discovering, reviewing, tracking, preparing, and authorizing job applications.",
   "author": {
-    "name": "Jinzhe"
+    "name": "Jinzhe",
+    "url": "https://github.com/ReplicantKin"
   },
   "license": "MIT",
-  "keywords": ["jobs", "career", "job-search", "applications", "china"],
+  "keywords": [
+    "jobs",
+    "career",
+    "job-search",
+    "applications",
+    "china"
+  ],
   "skills": "./skills/",
   "interface": {
     "displayName": "Job Search Agent",
@@ -17,11 +24,19 @@
     "brandColor": "#2563EB",
     "composerIcon": "./assets/job-search-agent-icon.svg",
     "logo": "./assets/job-search-agent-icon.svg",
-    "capabilities": ["Interactive", "Write"],
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
     "defaultPrompt": [
       "执行今天的求职搜索，只显示新岗位和有实质更新的岗位。",
       "检查我收藏的岗位，准备下一批投递材料。",
       "展示岗位状态、投递证据和待跟进事项。"
-    ]
-  }
+    ],
+    "websiteURL": "https://github.com/ReplicantKin/job-search-agent",
+    "privacyPolicyURL": "https://github.com/ReplicantKin/job-search-agent/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/ReplicantKin/job-search-agent/blob/main/TERMS.md"
+  },
+  "repository": "https://github.com/ReplicantKin/job-search-agent",
+  "homepage": "https://github.com/ReplicantKin/job-search-agent"
 }
