@@ -32,7 +32,7 @@ class ReleaseTests(unittest.TestCase):
         submission_text = submission_path.read_text(encoding="utf-8")
         self.assertIn("5 个正向测试用例", submission_text)
         self.assertIn("3 个反向测试用例", submission_text)
-        self.assertIn("job-search-agent-0.1.1.zip", submission_text)
+        self.assertIn("job-search-agent-0.1.2.zip", submission_text)
         publishing_text = (ROOT / "docs" / "publishing.md").read_text(encoding="utf-8")
         self.assertIn("codex plugin marketplace add ReplicantKin/job-search-agent", publishing_text)
         self.assertIn("job-search-agent@job-search-agent-public", publishing_text)
@@ -53,6 +53,11 @@ class ReleaseTests(unittest.TestCase):
         self.assertIn("逐个确认", workflow_text)
         self.assertIn("daily", workflow_text)
         self.assertIn("不得批量投递", workflow_text)
+        self.assertIn("target_roles", workflow_text)
+        self.assertIn("已检查 URL", workflow_text)
+        discovery_text = (ROOT / "skills" / "job-discovery" / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("公司官网和官方 ATS", discovery_text)
+        self.assertIn("exclude_keywords", discovery_text)
 
     def test_repo_marketplace_points_at_this_plugin_root(self):
         marketplace_path = ROOT / ".agents" / "plugins" / "marketplace.json"
@@ -94,7 +99,7 @@ class ReleaseTests(unittest.TestCase):
                 capture_output=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            archive = Path(directory) / "job-search-agent-0.1.1.zip"
+            archive = Path(directory) / "job-search-agent-0.1.2.zip"
             self.assertTrue(archive.exists())
             with zipfile.ZipFile(archive) as package:
                 names = set(package.namelist())
@@ -117,7 +122,7 @@ class ReleaseTests(unittest.TestCase):
                 capture_output=True,
             )
             self.assertEqual(result.returncode, 0, result.stderr)
-            archive = output_dir / "job-search-agent-0.1.1.zip"
+            archive = output_dir / "job-search-agent-0.1.2.zip"
             install_dir = Path(directory) / "installed"
             install_dir.mkdir()
             with zipfile.ZipFile(archive) as package:

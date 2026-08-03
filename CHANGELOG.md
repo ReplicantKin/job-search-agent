@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2
+
+- Make the daily discovery workflow read local search preferences, prioritize company and official ATS pages, and avoid rechecking unchanged URLs or resurfacing already handled roles.
+
 ## 0.1.1
 
 - Sanitize application evidence and execution events with an explicit allowlist so accidental passwords, tokens, and nested secret fields do not persist or enter exports.

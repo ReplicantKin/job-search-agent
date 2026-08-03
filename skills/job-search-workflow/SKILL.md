@@ -11,15 +11,16 @@ Use this skill as the entry point when the user asks to find work, run the daily
 
 Run the stages in order:
 
-1. Read the user's configured local profile and run `python3 scripts/job_search_agent.py daily`.
-2. Use the approved browser/search surface to inspect company career pages, official ATS pages, BOSS 直聘, 猎聘, and 前程无忧. Preserve each checked URL and date, then normalize the captured JSON/HTML with `ingest`.
-3. Apply the local fit prefilter and show only new or materially updated roles in the review queue. For every role, state the source evidence, match strengths, largest gap, and uncertainty. A page view or AI score is not a user review decision.
-4. Ask the user for an explicit decision on each role: keep, save, ready to apply, skip, or do not recommend. Do not silently mark a role as reviewed.
-5. For roles marked ready, prepare the role-specific material package and show the selected resume, cover-letter, and answer versions. Pause for user edits and for salary, availability, location, work authorization, or other sensitive commitments.
-6. Present one role at a time with the job URL, company, title, fit summary, material versions, fields that will be filled, and the exact action `投递`. 逐个确认后才能 issue that role's authorization；不得批量投递，也不得把“看起来合适”当作授权。
-7. After authorization, use the connected browser session or the approved local credential store. Consume only that role's one-time authorization. Pause for CAPTCHA, MFA, unknown questions, missing material, site errors, or any unsupported commitment.
-8. Record `submitted` only with a confirmation URL, application ID, visible confirmation text, screenshot reference, or explicit user confirmation. Otherwise record `paused`, `failed`, or `manual_required` with the actual reason.
-9. Show follow-up queues with `list --queue no_reply`, `list --queue hr_contact`, `list --queue rejected`, `list --queue offer`, and `show JOB_ID` when the user needs the evidence trail.
+1. Read the user's configured local profile, especially `target_roles`, `locations`, `exclude_companies`, `exclude_keywords`, salary, work mode, seniority, language, and target-company preferences. If the two core fields `target_roles` and `locations` are missing, ask before starting a broad search.
+2. Run `python3 scripts/job_search_agent.py daily` to load new, saved, apply, and follow-up queues before opening sources.
+3. Use the approved browser/search surface to inspect company career pages and official ATS pages first, then recruiting feeds, BOSS 直聘, 猎聘, and 前程无忧. 优先公司官网和官方 ATS，保留每个已检查 URL和日期，再用 `ingest` 规范化 JSON/HTML。Reuse the local source history to avoid rechecking unchanged URLs; only a changed preference or meaningful page update justifies a new pass.
+4. Apply hard exclusions, the local fit prefilter, and the deduplication/source-history rules; show only new or materially updated roles in the review queue. For every role, state the source evidence, match strengths, largest gap, and uncertainty. A page view or AI score is not a user review decision.
+5. Ask the user for an explicit decision on each role: keep, save, ready to apply, skip, or do not recommend. Do not silently mark a role as reviewed.
+6. For roles marked ready, prepare the role-specific material package and show the selected resume, cover-letter, and answer versions. Pause for user edits and for salary, availability, location, work authorization, or other sensitive commitments.
+7. Present one role at a time with the job URL, company, title, fit summary, material versions, fields that will be filled, and the exact action `投递`. 逐个确认后才能 issue that role's authorization；不得批量投递，也不得把“看起来合适”当作授权。
+8. After authorization, use the connected browser session or the approved local credential store. Consume only that role's one-time authorization. Pause for CAPTCHA, MFA, unknown questions, missing material, site errors, or any unsupported commitment.
+9. Record `submitted` only with a confirmation URL, application ID, visible confirmation text, screenshot reference, or explicit user confirmation. Otherwise record `paused`, `failed`, or `manual_required` with the actual reason.
+10. Show follow-up queues with `list --queue no_reply`, `list --queue hr_contact`, `list --queue rejected`, `list --queue offer`, and `show JOB_ID` when the user needs the evidence trail.
 
 ## Recruiter communication
 

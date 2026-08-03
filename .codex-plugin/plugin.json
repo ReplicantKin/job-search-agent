@@ -1,6 +1,6 @@
 {
   "name": "job-search-agent",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A local-first Codex plugin for discovering, reviewing, tracking, preparing, and authorizing job applications.",
   "author": {
     "name": "Jinzhe",

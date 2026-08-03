@@ -7,6 +7,30 @@ description: Search public China job sources, normalize postings, and import onl
 
 Use this skill for a daily job-search run. The plugin is local-first, but live discovery must use public pages and the user's approved browser/search tools.
 
+## Search configuration
+
+Read the local profile before searching. Use these fields when present:
+
+- `target_roles`: role names and close Chinese/English variants;
+- `locations`: acceptable cities or regions;
+- `exclude_companies` and `exclude_keywords`: hard exclusions;
+- `salary_floor`, `work_modes`, `seniority`, and `languages`: preference filters;
+- `target_companies` or `company_career_urls`: employer-specific sources.
+
+If there are no target roles or locations, ask for those two inputs before launching a broad search. Treat missing optional preferences as unknown, not as permission to invent them.
+
+## Source pass
+
+For each daily run, make one focused search pass in this order:
+
+1. Search 公司官网和官方 ATS pages for configured target companies and roles.
+2. Search official recruiting feeds or public company job pages for roles not covered by the first pass.
+3. Search BOSS 直聘, 猎聘, and 前程无忧 using the approved role/location terms.
+
+Use the current visible result page and preserve its exact URL plus the check time. Do not repeat a source URL already present in the local source history unless the user changed a search preference or the page has a meaningful update. Do not use an old aggregator snippet as a fresh posting.
+
+Before showing a role, apply hard exclusions, then the local deduplication rules, then the fit prefilter. A role that is already reviewed, saved, applied, rejected, or otherwise present in the local history should not be shown as a new discovery; show it only when its job description, title, location, employer, or detail URL materially changed.
+
 ## Default source order
 
 1. Company career pages and official ATS pages.
