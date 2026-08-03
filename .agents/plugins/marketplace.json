@@ -1,0 +1,20 @@
+{
+  "name": "job-search-agent-public",
+  "interface": {
+    "displayName": "Job Search Agent"
+  },
+  "plugins": [
+    {
+      "name": "job-search-agent",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

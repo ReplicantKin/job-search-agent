@@ -1,6 +1,22 @@
 # Publishing and local installation
 
-This is a skills-only Codex plugin. It has no cloud endpoint, account service, or bundled MCP server. The public package contains the manifest, skills, local Python core, public documentation, examples, and legal documents; development tests and internal planning notes remain in the source repository.
+This is a skills-only Codex plugin. It has no cloud endpoint, account service, or bundled MCP server. The repository is also a repo-scoped Codex marketplace: `.agents/plugins/marketplace.json` exposes the plugin root for local or Git-backed installation. The public package contains the manifest, skills, local Python core, public documentation, examples, and legal documents; development tests and internal planning notes remain in the source repository.
+
+## Install from GitHub
+
+With the Codex CLI installed and authenticated for Git operations when your Git host requires it:
+
+```bash
+codex plugin marketplace add ReplicantKin/job-search-agent --ref main
+codex plugin add job-search-agent@job-search-agent-public
+```
+
+After installation, start a new Codex task so the bundled skills are loaded. To install from a local clone instead:
+
+```bash
+codex plugin marketplace add /path/to/job-search-agent
+codex plugin add job-search-agent@job-search-agent-public
+```
 
 ## Local test
 

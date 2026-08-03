@@ -27,7 +27,16 @@ The browser execution layer must pause for CAPTCHA, MFA, unknown questions, sens
 
 ## Install for development
 
-This repository contains the plugin root. Validate it with:
+This repository is both the plugin root and a repo-scoped Codex marketplace. After cloning it, register the repository and install the plugin:
+
+```bash
+codex plugin marketplace add ./job-search-agent
+codex plugin add job-search-agent@job-search-agent-public
+```
+
+Start a new Codex task after installation so the skills are loaded. The repository can also be added directly from GitHub with `codex plugin marketplace add ReplicantKin/job-search-agent`.
+
+Validate the plugin source with:
 
 ```bash
 python3 /path/to/plugin-creator/scripts/validate_plugin.py .

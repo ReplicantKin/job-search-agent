@@ -27,6 +27,9 @@ class ReleaseTests(unittest.TestCase):
         self.assertTrue((ROOT / "TERMS.md").exists())
         self.assertTrue((ROOT / "docs" / "publishing.md").exists())
         self.assertTrue((ROOT / "docs" / "evaluation.md").exists())
+        publishing_text = (ROOT / "docs" / "publishing.md").read_text(encoding="utf-8")
+        self.assertIn("codex plugin marketplace add ReplicantKin/job-search-agent", publishing_text)
+        self.assertIn("job-search-agent@job-search-agent-public", publishing_text)
         self.assertTrue((ROOT / "assets" / "job-search-agent-icon.svg").exists())
         self.assertEqual(manifest["interface"]["composerIcon"], "./assets/job-search-agent-icon.svg")
         self.assertEqual(manifest["interface"]["logo"], "./assets/job-search-agent-icon.svg")
@@ -44,6 +47,18 @@ class ReleaseTests(unittest.TestCase):
         self.assertIn("逐个确认", workflow_text)
         self.assertIn("daily", workflow_text)
         self.assertIn("不得批量投递", workflow_text)
+
+    def test_repo_marketplace_points_at_this_plugin_root(self):
+        marketplace_path = ROOT / ".agents" / "plugins" / "marketplace.json"
+        self.assertTrue(marketplace_path.exists())
+        marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+        self.assertEqual(marketplace["name"], "job-search-agent-public")
+        self.assertEqual(len(marketplace["plugins"]), 1)
+        entry = marketplace["plugins"][0]
+        self.assertEqual(entry["name"], "job-search-agent")
+        self.assertEqual(entry["source"], {"source": "local", "path": "./"})
+        self.assertEqual(entry["policy"], {"installation": "AVAILABLE", "authentication": "ON_INSTALL"})
+        self.assertEqual(entry["category"], "Productivity")
 
     def test_public_package_contains_no_personal_workspace_paths(self):
         forbidden = ("/Users/", "/private/var/", "求职" + "上下文.md", "automation-" + "8")
