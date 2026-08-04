@@ -35,6 +35,46 @@ class FitTests(unittest.TestCase):
         self.assertIn("location", assessment.matched_dimensions)
         self.assertTrue(assessment.strengths)
 
+    def test_chinese_role_target_matches_english_solution_architect_title(self):
+        assessment = evaluate_fit(
+            job(title="AI Solution Architect"),
+            {"target_roles": ["解决方案架构师"]},
+        )
+
+        self.assertEqual(assessment.verdict, "strong_match")
+        self.assertIn("role", assessment.matched_dimensions)
+        self.assertTrue(any("alias" in strength.lower() for strength in assessment.strengths))
+
+    def test_english_role_target_matches_chinese_customer_success_title(self):
+        assessment = evaluate_fit(
+            job(title="高级客户成功经理"),
+            {"target_roles": ["customer success"]},
+        )
+
+        self.assertEqual(assessment.verdict, "strong_match")
+        self.assertIn("role", assessment.matched_dimensions)
+
+    def test_unrelated_role_families_do_not_match_through_shared_words(self):
+        assessment = evaluate_fit(
+            job(title="AI 产品经理"),
+            {"target_roles": ["解决方案架构师"]},
+        )
+
+        self.assertEqual(assessment.verdict, "weak_match")
+        self.assertNotIn("role", assessment.matched_dimensions)
+
+    def test_alias_match_does_not_override_excluded_company(self):
+        assessment = evaluate_fit(
+            job(company="明确排除公司", title="AI Solution Architect"),
+            {
+                "target_roles": ["解决方案架构师"],
+                "exclude_companies": ["明确排除公司"],
+            },
+        )
+
+        self.assertEqual(assessment.verdict, "excluded")
+        self.assertEqual(assessment.score, 0)
+
     def test_excluded_company_is_never_a_recommended_match(self):
         assessment = evaluate_fit(
             job(company="明确排除公司"),
