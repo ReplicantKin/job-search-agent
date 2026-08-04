@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
@@ -20,6 +21,40 @@ WEIGHTS = {
     "preferred": 10.0,
     "work_mode": 5.0,
 }
+
+
+ROLE_ALIAS_FAMILIES = (
+    (
+        "solutions architecture",
+        (
+            "解决方案架构师",
+            "solution architect",
+            "solutions architect",
+            "cloud solution architect",
+            "ai solution architect",
+        ),
+    ),
+    (
+        "solutions consulting",
+        ("解决方案顾问", "solutions consultant", "solution consultant"),
+    ),
+    (
+        "presales",
+        ("售前", "presales", "pre-sales", "sales engineer", "technical sales"),
+    ),
+    (
+        "customer success",
+        ("客户成功", "customer success", "customer success manager"),
+    ),
+    (
+        "commercial product",
+        ("产品商业化", "product commercialization", "commercial product"),
+    ),
+    (
+        "forward deployed engineering",
+        ("fde", "forward deployed engineer", "forward-deployed engineer"),
+    ),
+)
 
 
 def evaluate_fit(job: Any, profile: Mapping[str, Any]) -> FitAssessment:
@@ -69,10 +104,25 @@ def evaluate_fit(job: Any, profile: Mapping[str, Any]) -> FitAssessment:
 
     if targets:
         total_weight += WEIGHTS["role"]
-        if any(_contains(title, target) or _contains(target, title) for target in targets):
+        role_match = next(
+            (
+                (target, alias_match)
+                for target in targets
+                for matched, alias_match in [_role_matches(title, target)]
+                if matched
+            ),
+            None,
+        )
+        if role_match is not None:
+            target, alias_match = role_match
             points += WEIGHTS["role"]
             matched.append("role")
-            strengths.append(f"role: title matches one of {', '.join(targets)}")
+            if alias_match:
+                strengths.append(
+                    f"role: title '{title}' matches configured target '{target}' through a known alias family"
+                )
+            else:
+                strengths.append(f"role: title matches one of {', '.join(targets)}")
         else:
             gaps.append(f"role: title does not directly match {', '.join(targets)}")
 
@@ -147,6 +197,33 @@ def _values(profile: Mapping[str, Any], *keys: str) -> list[str]:
 
 def _contains(haystack: str, needle: str) -> bool:
     return _text(needle).lower() in _text(haystack).lower()
+
+
+def _role_matches(title: str, target: str) -> tuple[bool, bool]:
+    normalized_title = _text(title).casefold()
+    normalized_target = _text(target).casefold()
+    if not normalized_title or not normalized_target:
+        return False, False
+    if normalized_target in normalized_title or normalized_title in normalized_target:
+        return True, False
+
+    for _, aliases in ROLE_ALIAS_FAMILIES:
+        normalized_aliases = tuple(alias.casefold() for alias in aliases)
+        target_aliases = tuple(
+            alias for alias in normalized_aliases if _role_alias_in_text(normalized_target, alias)
+        )
+        title_aliases = tuple(
+            alias for alias in normalized_aliases if _role_alias_in_text(normalized_title, alias)
+        )
+        if target_aliases and title_aliases:
+            return True, True
+    return False, False
+
+
+def _role_alias_in_text(text: str, alias: str) -> bool:
+    if alias == "fde":
+        return re.search(r"(?<![a-z0-9])fde(?![a-z0-9])", text) is not None
+    return alias in text
 
 
 def _text(value: Any) -> str:
