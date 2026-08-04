@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.6
+
+- Treat missing or unknown work-mode data as unknown in fit scoring instead of awarding a preferred hybrid/remote match.
+- Preserve the explainable `work-mode: unspecified` gap so users can review the missing evidence before deciding.
+
 ## 0.1.5
 
 - Match documented Chinese and English role aliases in the local fit prefilter, including solution architecture, presales, customer success, commercial product, and forward-deployed engineering titles.

@@ -159,7 +159,7 @@ def evaluate_fit(job: Any, profile: Mapping[str, Any]) -> FitAssessment:
 
     if work_modes:
         total_weight += WEIGHTS["work_mode"]
-        if any(_contains(work_mode, wanted) or _contains(wanted, work_mode) for wanted in work_modes):
+        if work_mode and any(_contains(work_mode, wanted) or _contains(wanted, work_mode) for wanted in work_modes):
             points += WEIGHTS["work_mode"]
             matched.append("work_mode")
             strengths.append(f"work-mode: {work_mode} matches preferred mode")

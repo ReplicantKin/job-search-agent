@@ -6,20 +6,20 @@ This packet is for the skills-only public plugin submission. It is intentionally
 
 - Name: `Job Search Agent`
 - Package: `job-search-agent`
-- Version: `0.1.5`
+- Version: `0.1.6`
 - Category: `Productivity`
 - Developer: `Jinzhe`
 - Website: <https://github.com/ReplicantKin/job-search-agent>
 - Support: <https://github.com/ReplicantKin/job-search-agent/issues>
 - Privacy: <https://github.com/ReplicantKin/job-search-agent/blob/main/PRIVACY.md>
 - Terms: <https://github.com/ReplicantKin/job-search-agent/blob/main/TERMS.md>
-- Package artifact: [`job-search-agent-0.1.5.zip`](https://github.com/ReplicantKin/job-search-agent/releases/download/v0.1.5/job-search-agent-0.1.5.zip)
+- Package artifact: [`job-search-agent-0.1.6.zip`](https://github.com/ReplicantKin/job-search-agent/releases/download/v0.1.6/job-search-agent-0.1.6.zip)
 
 The plugin is local-first and skills-only. It has no hosted endpoint, cloud database, telemetry, or bundled account service. Its local Python core is included for the user's local job history, deduplication, material registry, credential boundary, and audit records.
 
 ## Release notes
 
-This release adds deterministic Chinese/English role-alias matching to the local fit prefilter while preserving source evidence, per-role confirmation, and manual handling for CAPTCHA, MFA, unknown fields, sensitive commitments, and unsupported site states.
+This release prevents missing work-mode data from being treated as a preferred hybrid/remote match, while preserving explainable scoring, source evidence, per-role confirmation, and manual handling for CAPTCHA, MFA, unknown fields, sensitive commitments, and unsupported site states.
 
 ## 5 个正向测试用例
 
@@ -47,5 +47,5 @@ This release adds deterministic Chinese/English role-alias matching to the local
 
 - Verify the developer or business identity in the publishing portal.
 - Choose the intended availability regions and complete the portal attestations.
-- Upload `dist/job-search-agent-0.1.5.zip` and review the skill scan results.
+- Upload `dist/job-search-agent-0.1.6.zip` and review the skill scan results.
 - Start a new Codex task after installation and rerun the cases above with generic fixtures only.

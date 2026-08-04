@@ -91,6 +91,14 @@ class FitTests(unittest.TestCase):
         self.assertEqual(assessment.verdict, "unconfigured")
         self.assertIsNone(assessment.score)
 
+    def test_unspecified_work_mode_is_not_treated_as_a_preferred_match(self):
+        assessment = evaluate_fit(job(work_mode=None), {"work_modes": ["hybrid", "remote"]})
+
+        self.assertEqual(assessment.score, 0.0)
+        self.assertEqual(assessment.verdict, "weak_match")
+        self.assertNotIn("work_mode", assessment.matched_dimensions)
+        self.assertTrue(any("work-mode: unspecified" in gap for gap in assessment.gaps))
+
     def test_rank_jobs_orders_recommendations_and_keeps_exclusions_visible(self):
         ranked = rank_jobs(
             [
