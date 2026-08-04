@@ -76,7 +76,7 @@ Add these methods to `FitTests`:
 Run:
 
 ```bash
-PYTHONPATH=src:. /Users/jinzhe/Projects/job-search-agent/.venv/bin/python -m unittest tests.test_fit
+PYTHONPATH=src:. python3 -m unittest tests.test_fit
 ```
 
 Expected: the two cross-language tests fail because the current literal matcher does not recognize the aliases; the existing tests continue to pass.
@@ -126,7 +126,7 @@ Replace the current role condition with a loop over `targets` that records the f
 Run:
 
 ```bash
-PYTHONPATH=src:. /Users/jinzhe/Projects/job-search-agent/.venv/bin/python -m unittest tests.test_fit
+PYTHONPATH=src:. python3 -m unittest tests.test_fit
 ```
 
 Expected: all focused tests pass.
@@ -136,7 +136,7 @@ Expected: all focused tests pass.
 Run:
 
 ```bash
-PYTHONPATH=src:. /Users/jinzhe/Projects/job-search-agent/.venv/bin/python -m unittest discover -s tests
+PYTHONPATH=src:. python3 -m unittest discover -s tests
 ```
 
 Expected: all baseline and new tests pass with no test failures.
@@ -177,7 +177,7 @@ Add a short `0.1.5` changelog entry and a README sentence saying that the local 
 Run:
 
 ```bash
-PYTHONPATH=src:. /Users/jinzhe/Projects/job-search-agent/.venv/bin/python -m unittest tests.test_release
+PYTHONPATH=src:. python3 -m unittest tests.test_release
 rg -n "0\.1\.4|0\.1\.5" . --glob '!docs/superpowers/**' --glob '!dist/**'
 ```
 
