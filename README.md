@@ -9,6 +9,7 @@ Job Search Agent is a publishable, local-first Codex plugin for discovering publ
 - Separates review state from application state.
 - Builds daily review, application, and follow-up queues.
 - Provides an explainable local prefilter and AI-assisted strengths/gaps review.
+- Recognizes documented Chinese/English role aliases locally while keeping source evidence and user review as separate gates.
 - Prepares role-specific, user-reviewed application materials without inventing facts.
 - Records application materials, evidence, and execution events.
 - Exports non-secret data as JSON or Markdown.

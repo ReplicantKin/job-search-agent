@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+
+- Match documented Chinese and English role aliases in the local fit prefilter, including solution architecture, presales, customer success, commercial product, and forward-deployed engineering titles.
+- Keep alias matches deterministic and explainable; source evidence and per-role user confirmation remain required.
+
 ## 0.1.4
 
 - Add append-only local source-page check history with a 24-hour freshness query.
